@@ -125,10 +125,6 @@ pub enum Filters {
         min_trailing_below_delta: Option<u16>,
         max_trailing_below_delta: Option<u16>,
     },
-    #[serde(rename = "PERCENT_PRICE_BY_SIDE")]
-    #[serde(rename_all = "camelCase")]
-    PercentPriceBySide {
-    },
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
