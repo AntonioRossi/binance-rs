@@ -1,87 +1,13 @@
-use serde::{Deserialize, Serialize};
-
 use crate::account::*;
 use crate::util::*;
-use crate::model::*;
 use crate::errors::*;
 use std::collections::BTreeMap;
 use crate::api::API;
 use crate::api::Margin;
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct MarginTransaction {
-    pub symbol: String,
-    pub order_id: u64,
-    pub order_list_id: Option<i64>,
-    pub client_order_id: String,
-    pub transact_time: u64,
-    #[serde(with = "string_or_float")]
-    pub price: f64,
-    #[serde(with = "string_or_float")]
-    pub orig_qty: f64,
-    #[serde(with = "string_or_float")]
-    pub executed_qty: f64,
-    #[serde(with = "string_or_float")]
-    pub cummulative_quote_qty: f64,
-    #[serde(with = "string_or_float", default = "default_stop_price")]
-    pub stop_price: f64,
-    pub status: String,
-    pub time_in_force: String,
-    #[serde(rename = "type")]
-    pub type_name: String,
-    pub side: String,
-    pub fills: Option<Vec<FillInfo>>,
-}
-
-fn default_stop_price() -> f64 {
-    0.0
-}
-
-pub struct MarginOrderRequest {
-    pub symbol: String,
-    pub qty: f64,
-    pub price: f64,
-    pub stop_price: Option<f64>,
-    pub order_side: OrderSide,
-    pub order_type: OrderType,
-    pub time_in_force: TimeInForce,
-    pub new_client_order_id: Option<String>,
-    pub is_isolated: bool,
-    pub side_effect_type: SideEffectType,
-}
-
-pub struct MarginOrderQuoteQuantityRequest {
-    pub symbol: String,
-    pub quote_order_qty: f64,
-    pub price: f64,
-    pub order_side: OrderSide,
-    pub order_type: OrderType,
-    pub time_in_force: TimeInForce,
-    pub new_client_order_id: Option<String>,
-    pub is_isolated: bool,
-    pub side_effect_type: SideEffectType,
-}
-
-/// NO_SIDE_EFFECT, MARGIN_BUY, AUTO_REPAY; default NO_SIDE_EFFECT.
-pub enum SideEffectType {
-    NoSideEffect,
-    MarginBuy,
-    AutoRepay,
-}
-
-impl From<SideEffectType> for String {
-    fn from(item: SideEffectType) -> Self {
-        match item {
-            SideEffectType::NoSideEffect => String::from("NO_SIDE_EFFECT"),
-            SideEffectType::MarginBuy => String::from("MARGIN_BUY"),
-            SideEffectType::AutoRepay => String::from("AUTO_REPAY"),
-        }
-    }
-}
+use super::margin_model::*;
 
 impl Account {
-
     // Place a MARGIN MARKET buy order with quote quantity - BUY
     pub fn margin_market_buy_using_quote_quantity<S, F>(
         &self, symbol: S, quote_order_qty: F, is_isolated: bool, side_effect_type: SideEffectType,

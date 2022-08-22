@@ -27,4 +27,4 @@ pub mod websockets;
 
 pub mod futures;
 
-pub mod account_margin;
+pub mod margin;
