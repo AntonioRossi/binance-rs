@@ -15,6 +15,13 @@ pub enum API {
     Spot(Spot),
     Savings(Sapi),
     Futures(Futures),
+    Margin(Margin),
+}
+
+/// Added endopoint for margin production and test orders.
+///
+pub enum Margin {
+    Order,
 }
 
 /// Endpoint for production and test orders.
@@ -92,6 +99,9 @@ pub enum Futures {
 impl From<API> for String {
     fn from(item: API) -> Self {
         String::from(match item {
+            API::Margin(route) => match route {
+                Margin::Order => "/sapi/v1/margin/order",
+            },
             API::Spot(route) => match route {
                 Spot::Ping => "/api/v3/ping",
                 Spot::Time => "/api/v3/time",
