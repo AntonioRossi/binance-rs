@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use crate::account::*;
 use crate::model::*;
 
-pub struct MarginOrderRequest {
+pub struct OrderRequest {
     pub symbol: String,
     pub qty: f64,
     pub price: f64,
@@ -16,7 +16,7 @@ pub struct MarginOrderRequest {
     pub side_effect_type: SideEffectType,
 }
 
-pub struct MarginOrderQuoteQuantityRequest {
+pub struct OrderQuoteQuantityRequest {
     pub symbol: String,
     pub quote_order_qty: f64,
     pub price: f64,
@@ -47,7 +47,7 @@ impl From<SideEffectType> for String {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct MarginTransaction {
+pub struct Transaction {
     pub symbol: String,
     pub order_id: u64,
     pub order_list_id: Option<i64>,
