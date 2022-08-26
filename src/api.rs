@@ -6,6 +6,7 @@ use crate::futures::general::*;
 use crate::futures::market::*;
 use crate::futures::userstream::*;
 use crate::general::*;
+use crate::margin::account::MarginAccount;
 use crate::market::*;
 use crate::userstream::*;
 use crate::savings::*;
@@ -253,6 +254,7 @@ impl Binance for UserStream {
     }
 }
 
+
 // *****************************************************
 //              Binance Futures API
 // *****************************************************
@@ -331,3 +333,28 @@ impl Binance for FuturesUserStream {
         }
     }
 }
+
+// *****************************************************
+//              Binance Margin API
+// *****************************************************
+
+impl Binance for MarginAccount {
+    fn new(api_key: Option<String>, secret_key: Option<String>) -> Self {
+        Self::new_with_config(api_key, secret_key, &Config::default())
+    }
+
+    fn new_with_config(
+        api_key: Option<String>, secret_key: Option<String>, config: &Config,
+    ) -> Self {
+        Self {
+            client: Client::new(
+                api_key,
+                secret_key,
+                config.futures_rest_api_endpoint.clone(),
+            ),
+            recv_window: config.recv_window,
+        }
+    }
+}
+
+
