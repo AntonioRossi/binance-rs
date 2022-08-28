@@ -29,7 +29,6 @@ impl MarginAccount {
             price: 0.0,
             order_side: OrderSide::Buy,
             order_type: OrderType::Market,
-            time_in_force: TimeInForce::GTC,
             new_client_order_id: None,
             is_isolated,
             side_effect_type,
@@ -53,7 +52,6 @@ impl MarginAccount {
             price: 0.0,
             order_side: OrderSide::Sell,
             order_type: OrderType::Market,
-            time_in_force: TimeInForce::GTC,
             new_client_order_id: None,
             is_isolated,
             side_effect_type,
@@ -80,7 +78,6 @@ impl MarginAccount {
             stop_price,
             order_side,
             order_type,
-            time_in_force,
             new_client_order_id,
             is_isolated,
             side_effect_type,
@@ -118,7 +115,6 @@ impl MarginAccount {
 
         if margin_order.price != 0.0 {
             order_parameters.insert("price".into(), margin_order.price.to_string());
-            order_parameters.insert("timeInForce".into(), margin_order.time_in_force.into());
         }
 
         if let Some(client_order_id) = margin_order.new_client_order_id {
@@ -140,7 +136,6 @@ impl MarginAccount {
 
         if order.price != 0.0 {
             order_parameters.insert("price".into(), order.price.to_string());
-            order_parameters.insert("timeInForce".into(), order.time_in_force.into());
         }
 
         // keys 'isIsolated' and 'sideEffectType' are required by margin orders
