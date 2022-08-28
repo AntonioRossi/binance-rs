@@ -64,7 +64,7 @@ impl MarginAccount {
     #[allow(clippy::too_many_arguments)]
     pub fn margin_custom_order<S, F>(
         &self, symbol: S, qty: F, price: f64, stop_price: Option<f64>, order_side: OrderSide,
-        order_type: OrderType, time_in_force: TimeInForce, new_client_order_id: Option<String>,
+        order_type: OrderType, new_client_order_id: Option<String>,
         is_isolated: bool, side_effect_type: SideEffectType,
     ) -> Result<Transaction>
     where
