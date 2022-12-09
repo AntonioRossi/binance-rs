@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use serde_json::{from_value, Value};
 use std::convert::TryFrom;
-use crate::errors::*;
+use crate::errors::{Error, ErrorKind, Result};
 
 #[derive(Deserialize, Clone)]
 pub struct Empty {}
@@ -181,6 +181,20 @@ pub struct OrderCanceled {
     pub orig_client_order_id: Option<String>,
     pub order_id: Option<u64>,
     pub client_order_id: Option<String>,
+}
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub enum SpotFuturesTransferType {
+    SpotToUsdtFutures = 1,
+    UsdtFuturesToSpot = 2,
+    SpotToCoinFutures = 3,
+    CoinFuturesToSpot = 4,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct TransactionId {
+    pub tran_id: u64,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -385,7 +399,6 @@ pub struct AggTrade {
     pub qty: f64,
 }
 
-
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct UserDataStreamExpiredEvent {
@@ -406,8 +419,7 @@ pub struct AccountUpdateEvent {
     pub event_time: u64,
 
     #[serde(rename = "a")]
-    pub data: AccountUpdateDataEvent
-
+    pub data: AccountUpdateDataEvent,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -567,7 +579,7 @@ pub struct OrderTradeEvent {
 ///
 /// Update Speed: Real-time
 ///
-/// https://github.com/binance/binance-spot-api-docs/blob/master/web-socket-streams.md#aggregate-trade-streams
+/// <https://github.com/binance/binance-spot-api-docs/blob/master/web-socket-streams.md#aggregate-trade-streams>
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct AggrTradesEvent {
@@ -611,7 +623,7 @@ pub struct AggrTradesEvent {
 ///
 /// Update Speed: Real-time
 ///
-/// https://github.com/binance/binance-spot-api-docs/blob/master/web-socket-streams.md#trade-streams
+/// <https://github.com/binance/binance-spot-api-docs/blob/master/web-socket-streams.md#trade-streams>
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct TradeEvent {
@@ -956,8 +968,8 @@ pub struct KlineSummary {
 fn get_value(row: &[Value], index: usize, name: &'static str) -> Result<Value> {
     Ok(row
         .get(index)
-        .ok_or(ErrorKind::KlineValueMissingError(index, name))?
-        .to_owned())
+        .ok_or_else(|| ErrorKind::KlineValueMissingError(index, name))?
+        .clone())
 }
 
 impl TryFrom<&Vec<Value>> for KlineSummary {
@@ -1421,11 +1433,8 @@ fn test_account_update_event() {
 }
     "#;
 
-
-
     let res = r#"AccountUpdateEvent { event_type: "ACCOUNT_UPDATE", event_time: 1564745798939, data: AccountUpdateDataEvent { reason: "ORDER", balances: [EventBalance { asset: "USDT", wallet_balance: "122624.12345678", cross_wallet_balance: "100.12345678", balance_change: "50.12345678" }, EventBalance { asset: "BUSD", wallet_balance: "1.00000000", cross_wallet_balance: "0.00000000", balance_change: "-49.12345678" }], positions: [EventPosition { symbol: "BTCUSDT", position_amount: "0", entry_price: "0.00000", accumulated_realized: "200", unrealized_pnl: "0", margin_type: "isolated", isolated_wallet: "0.00000000", position_side: "BOTH" }, EventPosition { symbol: "BTCUSDT", position_amount: "20", entry_price: "6563.66500", accumulated_realized: "0", unrealized_pnl: "2850.21200", margin_type: "isolated", isolated_wallet: "13200.70726908", position_side: "LONG" }, EventPosition { symbol: "BTCUSDT", position_amount: "-10", entry_price: "6563.86000", accumulated_realized: "-45.04000000", unrealized_pnl: "-1423.15600", margin_type: "isolated", isolated_wallet: "6570.42511771", position_side: "SHORT" }] } }"#;
-        let v: AccountUpdateEvent = serde_json::from_str(json).unwrap();
-      assert_eq!(format!("{v:?}"), res);
-     //let event =  from_value::<AccountUpdateEvent>(json).unwrap();
-
+    let v: AccountUpdateEvent = serde_json::from_str(json).unwrap();
+    assert_eq!(format!("{:?}", v), res);
+    //let event =  from_value::<AccountUpdateEvent>(json).unwrap();
 }

@@ -1,11 +1,14 @@
 use std::collections::BTreeMap;
+use std::fmt::Display;
 
-use crate::util::*;
-use crate::errors::*;
+use crate::util::build_signed_request;
+use crate::errors::Result;
 use crate::client::Client;
 use crate::api::{API, Futures};
 use crate::model::Empty;
-use crate::account::{OrderSide, TimeInForce};
+use crate::account::OrderSide;
+use crate::futures::model::{Order, TradeHistory};
+
 use super::model::{
     ChangeLeverageResponse, Transaction, CanceledOrder, PositionRisk, AccountBalance,
     AccountInformation,
@@ -43,12 +46,12 @@ pub enum PositionSide {
     Short,
 }
 
-impl From<PositionSide> for String {
-    fn from(item: PositionSide) -> Self {
-        match item {
-            PositionSide::Both => String::from("BOTH"),
-            PositionSide::Long => String::from("LONG"),
-            PositionSide::Short => String::from("SHORT"),
+impl Display for PositionSide {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Both => write!(f, "BOTH"),
+            Self::Long => write!(f, "LONG"),
+            Self::Short => write!(f, "SHORT"),
         }
     }
 }
@@ -63,16 +66,16 @@ pub enum OrderType {
     TrailingStopMarket,
 }
 
-impl From<OrderType> for String {
-    fn from(item: OrderType) -> Self {
-        match item {
-            OrderType::Limit => String::from("LIMIT"),
-            OrderType::Market => String::from("MARKET"),
-            OrderType::Stop => String::from("STOP"),
-            OrderType::StopMarket => String::from("STOP_MARKET"),
-            OrderType::TakeProfit => String::from("TAKE_PROFIT"),
-            OrderType::TakeProfitMarket => String::from("TAKE_PROFIT_MARKET"),
-            OrderType::TrailingStopMarket => String::from("TRAILING_STOP_MARKET"),
+impl Display for OrderType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Limit => write!(f, "LIMIT"),
+            Self::Market => write!(f, "MARKET"),
+            Self::Stop => write!(f, "STOP"),
+            Self::StopMarket => write!(f, "STOP_MARKET"),
+            Self::TakeProfit => write!(f, "TAKE_PROFIT"),
+            Self::TakeProfitMarket => write!(f, "TAKE_PROFIT_MARKET"),
+            Self::TrailingStopMarket => write!(f, "TRAILING_STOP_MARKET"),
         }
     }
 }
@@ -82,11 +85,30 @@ pub enum WorkingType {
     ContractPrice,
 }
 
-impl From<WorkingType> for String {
-    fn from(item: WorkingType) -> Self {
-        match item {
-            WorkingType::MarkPrice => String::from("MARK_PRICE"),
-            WorkingType::ContractPrice => String::from("CONTRACT_PRICE"),
+impl Display for WorkingType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::MarkPrice => write!(f, "MARK_PRICE"),
+            Self::ContractPrice => write!(f, "CONTRACT_PRICE"),
+        }
+    }
+}
+
+#[allow(clippy::all)]
+pub enum TimeInForce {
+    GTC,
+    IOC,
+    FOK,
+    GTX,
+}
+
+impl Display for TimeInForce {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::GTC => write!(f, "GTC"),
+            Self::IOC => write!(f, "IOC"),
+            Self::FOK => write!(f, "FOK"),
+            Self::GTX => write!(f, "GTX"),
         }
     }
 }
@@ -212,7 +234,7 @@ impl FuturesAccount {
         S: Into<String>,
         F: Into<f64>,
     {
-        let sell: OrderRequest = OrderRequest {
+        let sell = OrderRequest {
             symbol: symbol.into(),
             side: OrderSide::Sell,
             position_side: None,
@@ -247,7 +269,9 @@ impl FuturesAccount {
             .delete_signed(API::Futures(Futures::Order), Some(request))
     }
 
-    pub fn cancel_order_with_client_id<S>(&self, symbol: S, orig_client_order_id: String) -> Result<CanceledOrder>
+    pub fn cancel_order_with_client_id<S>(
+        &self, symbol: S, orig_client_order_id: String,
+    ) -> Result<CanceledOrder>
     where
         S: Into<String>,
     {
@@ -266,7 +290,7 @@ impl FuturesAccount {
         S: Into<String>,
         F: Into<f64>,
     {
-        let sell: OrderRequest = OrderRequest {
+        let sell = OrderRequest {
             symbol: symbol.into(),
             side: OrderSide::Buy,
             position_side: None,
@@ -294,7 +318,7 @@ impl FuturesAccount {
         S: Into<String>,
         F: Into<f64>,
     {
-        let sell: OrderRequest = OrderRequest {
+        let sell = OrderRequest {
             symbol: symbol.into(),
             side: OrderSide::Sell,
             position_side: None,
@@ -318,7 +342,7 @@ impl FuturesAccount {
 
     // Custom order for for professional traders
     pub fn custom_order(&self, order_request: CustomOrderRequest) -> Result<Transaction> {
-        let order: OrderRequest = OrderRequest {
+        let order = OrderRequest {
             symbol: order_request.symbol,
             side: order_request.side,
             position_side: order_request.position_side,
@@ -340,17 +364,72 @@ impl FuturesAccount {
             .post_signed(API::Futures(Futures::Order), request)
     }
 
+    pub fn get_all_orders<S, F, N>(
+        &self, symbol: S, order_id: F, start_time: F, end_time: F, limit: N,
+    ) -> Result<Vec<Order>>
+    where
+        S: Into<String>,
+        F: Into<Option<u64>>,
+        N: Into<Option<u16>>,
+    {
+        let mut parameters = BTreeMap::new();
+        parameters.insert("symbol".into(), symbol.into());
+        if let Some(order_id) = order_id.into() {
+            parameters.insert("orderId".into(), order_id.to_string());
+        }
+        if let Some(start_time) = start_time.into() {
+            parameters.insert("startTime".into(), start_time.to_string());
+        }
+        if let Some(end_time) = end_time.into() {
+            parameters.insert("endTime".into(), end_time.to_string());
+        }
+        if let Some(limit) = limit.into() {
+            parameters.insert("limit".into(), limit.to_string());
+        }
+
+        let request = build_signed_request(parameters, self.recv_window)?;
+        self.client
+            .get_signed(API::Futures(Futures::AllOrders), Some(request))
+    }
+
+    pub fn get_user_trades<S, F, N>(
+        &self, symbol: S, from_id: F, start_time: F, end_time: F, limit: N,
+    ) -> Result<Vec<TradeHistory>>
+    where
+        S: Into<String>,
+        F: Into<Option<u64>>,
+        N: Into<Option<u16>>,
+    {
+        let mut parameters = BTreeMap::new();
+        parameters.insert("symbol".into(), symbol.into());
+        if let Some(order_id) = from_id.into() {
+            parameters.insert("fromId".into(), order_id.to_string());
+        }
+        if let Some(start_time) = start_time.into() {
+            parameters.insert("startTime".into(), start_time.to_string());
+        }
+        if let Some(end_time) = end_time.into() {
+            parameters.insert("endTime".into(), end_time.to_string());
+        }
+        if let Some(limit) = limit.into() {
+            parameters.insert("limit".into(), limit.to_string());
+        }
+
+        let request = build_signed_request(parameters, self.recv_window)?;
+        self.client
+            .get_signed(API::Futures(Futures::UserTrades), Some(request))
+    }
     fn build_order(&self, order: OrderRequest) -> BTreeMap<String, String> {
         let mut parameters = BTreeMap::new();
         parameters.insert("symbol".into(), order.symbol);
-        parameters.insert("side".into(), order.side.into());
-        parameters.insert("type".into(), order.order_type.into());
+        parameters.insert("side".into(), order.side.to_string());
+        parameters.insert("type".into(), order.order_type.to_string());
 
         if let Some(position_side) = order.position_side {
-            parameters.insert("positionSide".into(), position_side.into());
+            parameters.insert("positionSide".into(), position_side.to_string());
         }
         if let Some(time_in_force) = order.time_in_force {
-            parameters.insert("timeInForce".into(), time_in_force.into());
+            parameters.insert("timeInForce".into(), time_in_force.to_string());
         }
         if let Some(qty) = order.qty {
             parameters.insert("quantity".into(), qty.to_string());
@@ -377,7 +456,7 @@ impl FuturesAccount {
             parameters.insert("callbackRate".into(), callback_rate.to_string());
         }
         if let Some(working_type) = order.working_type {
-            parameters.insert("workingType".into(), working_type.into());
+            parameters.insert("workingType".into(), working_type.to_string());
         }
         if let Some(price_protect) = order.price_protect {
             parameters.insert(

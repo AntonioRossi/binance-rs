@@ -156,3 +156,25 @@ impl MarginAccount {
         order_parameters
     }
 }
+
+
+// implement trait From<account::OrderType> for String
+impl From<OrderType> for String {
+    fn from(order_type: OrderType) -> Self {
+        match order_type {
+            OrderType::Limit => "LIMIT".into(),
+            OrderType::Market => "MARKET".into(),
+            OrderType::StopLossLimit => "STOP_LOSS_LIMIT".into(),
+        }
+    }
+}
+
+// implement trait From<account::OrderSide> for String
+impl From<OrderSide> for String {
+    fn from(order_side: OrderSide) -> Self {
+        match order_side {
+            OrderSide::Buy => "BUY".into(),
+            OrderSide::Sell => "SELL".into(),
+        }
+    }
+}
