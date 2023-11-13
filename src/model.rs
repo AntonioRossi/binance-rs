@@ -90,10 +90,20 @@ pub enum Filters {
     #[serde(rename = "NOTIONAL")]
     #[serde(rename_all = "camelCase")]
     Notional {
-        notional: Option<String>,
+        // TODO: MIN_NOTIONAL is deprecated and NOTIONAL has been modified as below, merge with original branch the changes
+        // {
+        //     "filterType": "NOTIONAL",
+        //     "minNotional": "10.00000000",
+        //     "applyMinToMarket": false,
+        //     "maxNotional": "10000.00000000",
+        //     "applyMaxToMarket": false,
+        //     "avgPriceMins": 5
+        //  }         
         min_notional: Option<String>,
-        apply_to_market: Option<bool>,
-        avg_price_mins: Option<f64>,
+        apply_min_to_market: Option<bool>,  // Renamed to match the JSON field "applyMinToMarket"
+        max_notional: Option<String>,       // Added field to match JSON "maxNotional"
+        apply_max_to_market: Option<bool>,  // Added field to match JSON "applyMaxToMarket"
+        avg_price_mins: Option<f64>,    
     },
     #[serde(rename = "ICEBERG_PARTS")]
     #[serde(rename_all = "camelCase")]
