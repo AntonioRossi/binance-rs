@@ -1,22 +1,12 @@
 use crate::account::Account;
 use crate::client::Client;
 use crate::config::Config;
-use crate::account::Account;
-use crate::client::Client;
-use crate::config::Config;
 use crate::futures::account::FuturesAccount;
 use crate::futures::general::FuturesGeneral;
 use crate::futures::market::FuturesMarket;
 use crate::futures::userstream::FuturesUserStream;
 use crate::general::General;
 use crate::margin::account::MarginAccount;
-use crate::market::Market;
-use crate::userstream::UserStream;
-use crate::savings::Savings;
-use crate::futures::general::FuturesGeneral;
-use crate::futures::market::FuturesMarket;
-use crate::futures::userstream::FuturesUserStream;
-use crate::general::General;
 use crate::market::Market;
 use crate::userstream::UserStream;
 use crate::savings::Savings;
@@ -69,7 +59,6 @@ pub enum Sapi {
     AssetDetail,
     DepositAddress,
     SpotFuturesTransfer,
-    SpotFuturesTransfer,
 }
 
 pub enum Futures {
@@ -91,8 +80,6 @@ pub enum Futures {
     BookTicker,
     AllForceOrders,
     AllOpenOrders,
-    AllOrders,
-    UserTrades,
     AllOrders,
     UserTrades,
     Order,
